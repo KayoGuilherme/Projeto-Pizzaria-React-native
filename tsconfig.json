@@ -1,0 +1,10 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {},
+  "include": ["**/*.ts", "**/*.tsx"],
+  "baseUrl": "./src",
+  "paths": {
+    "@routes/*": ["./routes/*"],
+    "@utils/*": ["./utils/*"]
+  }
+}
