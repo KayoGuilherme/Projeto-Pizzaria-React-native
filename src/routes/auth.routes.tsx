@@ -4,6 +4,11 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack'
 import SignIn from '../pages/SignIn';
 import SignUp from '../pages/SignUp';
 
+export type StackAuthPramList = {
+    SignIn: undefined;
+    SignUp: undefined;
+}
+
 const Stack = createNativeStackNavigator();
 
 function AuthRoutes () {

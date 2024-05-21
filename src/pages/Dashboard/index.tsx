@@ -8,21 +8,31 @@ import {
   TextInput,
 } from "react-native";
 import { AuthContext } from "../../contexts/AuthContext";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useNavigation } from "@react-navigation/native";
+import { StackPramsList } from "../../routes/app.routes";
+import { api } from "../../config/axios";
 
 export default function Dashboard() {
-  const navigation = useNavigation()
+  const navigation = useNavigation<NativeStackNavigationProp<StackPramsList>>();
   const { signOut } = useContext(AuthContext);
-  const [table, setTable] = useState('')
+  const [table, setTable] = useState("");
 
   async function Order() {
-    if(table === '') {
+    if (table === "") {
       return;
-    }
-    navigation.navigate('Order')
+    };
+
+    const response = await api.post('/order', {
+      table: Number(table)
+    });
+  
+    navigation.navigate("Order", {
+      number: table, order_id: response.data.id
+    });
+
+    setTable("");
   }
-
-
 
   return (
     <SafeAreaView style={styles.container}>
@@ -69,8 +79,8 @@ const styles = StyleSheet.create({
   },
   btntext: {
     fontSize: 18,
-    color: '#101026',
-    fontWeight: 'bold'
+    color: "#101026",
+    fontWeight: "bold",
   },
   btn: {
     width: "90%",
@@ -79,7 +89,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     justifyContent: "center",
     alignItems: "center",
-    marginVertical: 12
+    marginVertical: 12,
   },
-  
 });

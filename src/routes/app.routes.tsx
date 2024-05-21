@@ -7,7 +7,10 @@ const Stack = createNativeStackNavigator<StackPramsList>();
 
 export type StackPramsList = {
   Dash: undefined;
-  Order: undefined;
+  Order: {
+    number: number | string;
+    order_id: string;
+  }
 }
 
 function AppRoutes() {

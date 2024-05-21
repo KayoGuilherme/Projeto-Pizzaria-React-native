@@ -10,10 +10,13 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { AuthContext } from "../../contexts/AuthContext";
+import { StackAuthPramList } from "../../routes/auth.routes";
 
 export default function SignIn() {
-  const navigation = useNavigation();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<StackAuthPramList>>();
 
   const { signIn, loadingAuth } = useContext(AuthContext);
   const [email, setEmail] = useState("");
