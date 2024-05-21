@@ -5,13 +5,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api } from "../config/axios";
 import { useNavigation } from "@react-navigation/native";
 
-
 type AuthContextData = {
   user: UserProps;
   isAuthenticated: boolean;
   signIn: (credentials: SignInProps) => Promise<void>;
   signUp: (credentials: SignUpProps) => Promise<void>;
-  loading: boolean
+  loading: boolean;
+  loadingAuth: boolean;
   signOut: () => Promise<void>;
 };
 
@@ -39,8 +39,7 @@ type SignUpProps = {
 export const AuthContext = createContext({} as AuthContextData);
 
 export function AuthProvider({ children }: AuthProviderProps) {
-
-  const navigation = useNavigation()
+  const navigation = useNavigation();
 
   const [user, setUser] = useState<UserProps>({
     id: "",
@@ -50,32 +49,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
   });
 
   const [loadingAuth, setLoadingAuth] = useState(false);
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true);
 
   const isAuthenticated = !!user.token;
 
   useEffect(() => {
     async function getUser() {
       const userInfo = await AsyncStorage.getItem("@pizzaria");
-      let hasUser: UserProps = JSON.parse(userInfo || `{}`)
+      let hasUser: UserProps = JSON.parse(userInfo || `{}`);
 
-      if(Object.keys(hasUser).length > 0){
-        api.defaults.headers.common['Authorization'] = `Bearer ${hasUser.token}`
+      if (Object.keys(hasUser).length > 0) {
+        api.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${hasUser.token}`;
       }
 
       setUser({
         id: hasUser.id,
         token: hasUser.token,
         name: hasUser.name,
-        email: hasUser.email
-      })
+        email: hasUser.email,
+      });
 
-      setLoading(false)
+      setLoading(false);
     }
 
-    getUser()
-  }, [])
-
+    getUser();
+  }, []);
 
   async function signUp({ name, email, password }: SignUpProps) {
     try {
@@ -84,7 +84,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         email,
         password,
       });
-      navigation.goBack()
+      navigation.goBack();
     } catch (error) {
       console.log(error);
     }
@@ -124,19 +124,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   async function signOut() {
-      await AsyncStorage.clear()
-      .then(() => {
-        setUser({
-          id: "",
-          name: "",
-          email: "",
-          token: "",
-        })
-      })
+    await AsyncStorage.clear().then(() => {
+      setUser({
+        id: "",
+        name: "",
+        email: "",
+        token: "",
+      });
+    });
   }
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, signIn, signUp, loading, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        signIn,
+        signUp,
+        loading,
+        loadingAuth,
+        signOut,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

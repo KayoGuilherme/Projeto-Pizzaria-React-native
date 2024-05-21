@@ -1,14 +1,33 @@
-import React from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack'
+import React from "react";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
-import Dashboard from '../pages/Dashboard'; 
+import Dashboard from "../pages/Dashboard";
+import Order from "../pages/Order/order";
+const Stack = createNativeStackNavigator<StackPramsList>();
 
-const Stack = createNativeStackNavigator();
+export type StackPramsList = {
+  Dash: undefined;
+  Order: undefined;
+}
 
 function AppRoutes() {
   return (
     <Stack.Navigator>
-      <Stack.Screen name="Dash" component={Dashboard} />
+      <Stack.Screen
+        name="Dash"
+        component={Dashboard}
+        options={{
+          headerShown: false,
+        }}
+      />
+
+      <Stack.Screen
+        name="Order"
+        component={Order}
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack.Navigator>
   );
 }
