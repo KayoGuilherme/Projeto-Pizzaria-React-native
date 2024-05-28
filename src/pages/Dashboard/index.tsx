@@ -6,6 +6,8 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { AuthContext } from "../../contexts/AuthContext";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -21,35 +23,39 @@ export default function Dashboard() {
   async function Order() {
     if (table === "") {
       return;
-    };
+    }
 
-    const response = await api.post('/order', {
-      table: Number(table)
+    const response = await api.post("/order", {
+      table: Number(table),
     });
-  
+
     navigation.navigate("Order", {
-      number: table, order_id: response.data.id
+      number: table,
+      order_id: response.data.id,
     });
 
     setTable("");
+    
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Novo Pedido</Text>
-      <TextInput
-        placeholder="Numero da Mesa"
-        placeholderTextColor="#F0F0F0"
-        keyboardType="numeric"
-        style={styles.input}
-        value={table}
-        onChangeText={setTable}
-      />
+    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.title}>Novo Pedido</Text>
+        <TextInput
+          placeholder="Numero da Mesa"
+          placeholderTextColor="#F0F0F0"
+          keyboardType="numeric"
+          style={styles.input}
+          value={table}
+          onChangeText={setTable}
+        />
 
-      <TouchableOpacity style={styles.btn} onPress={Order}>
-        <Text style={styles.btntext}>Abrir Mesa</Text>
-      </TouchableOpacity>
-    </SafeAreaView>
+        <TouchableOpacity style={styles.btn} onPress={Order}>
+          <Text style={styles.btntext}>Abrir Mesa</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 }
 

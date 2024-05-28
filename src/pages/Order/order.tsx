@@ -6,12 +6,16 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
+  FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
 import { api } from "../../config/axios";
 import ModalPicker from "../../components/ModalPicker";
+import ListItem from "../../components/ListItem/Items";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { StackPramsList } from "../../routes/app.routes";
 
 type RouteDetail = {
   Order: {
@@ -25,15 +29,31 @@ export type CategoryProps = {
   name: string;
 };
 
+type ProductProps = {
+  id: string;
+  name: string;
+};
+
+type ItemsProps = {
+  id: string;
+  product_id: string;
+  name: string;
+  amount: number | string;
+};
+
 type OrderRouteProps = RouteProp<RouteDetail, "Order">;
 
 export default function Order() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<StackPramsList>>();
   const route = useRoute<OrderRouteProps>();
   const [category, setCategory] = useState<CategoryProps[] | []>([]);
   const [categorySelect, setCategorySelect] = useState<CategoryProps>();
   const [amount, setAmount] = useState("1");
+  const [items, setItems] = useState<ItemsProps[]>([]);
   const [modalCategoryVisible, setModalCategoryVisible] = useState(false);
+  const [products, setProducts] = useState<ProductProps[] | []>([]);
+  const [productSelected, setProductSelected] = useState<ProductProps>();
+  const [modalProductVisible, setModalProductVisible] = useState(false);
 
   useEffect(() => {
     async function loadingData() {
@@ -45,8 +65,21 @@ export default function Order() {
     loadingData();
   }, []);
 
-  function ChangeCategory (item: CategoryProps) {
-    setCategorySelect(item)
+  useEffect(() => {
+    async function handleProduct() {
+      const response = await api.get("/category/product", {
+        params: {
+          category_id: categorySelect?.id,
+        },
+      });
+      setProducts(response.data);
+      setProductSelected(response.data[0]);
+    }
+    handleProduct();
+  }, [categorySelect]);
+
+  function ChangeCategory(item: CategoryProps) {
+    setCategorySelect(item);
   }
 
   async function handleCloseOrder() {
@@ -62,13 +95,54 @@ export default function Order() {
     }
   }
 
+  async function handleAdd() {
+    try {
+      const response = await api.post("/order/add", {
+        order_id: route.params?.order_id,
+        product_id: productSelected?.id,
+        amount: Number(amount),
+      });
+
+      let data = {
+        id: response.data.id,
+        product_id: productSelected?.id as string,
+        name: productSelected?.name as string,
+        amount: amount,
+      };
+      setItems((oldArray) => [...oldArray, data]);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function handleDeleteItem(item_id: string) {
+    await api.delete("/order/remove", {
+      params: {
+        item_id,
+      },
+    });
+    let removeItem = items.filter((item) => {
+      return item.id !== item_id;
+    });
+
+    setItems(removeItem);
+  }
+
+  function handleNavigation() {
+    navigation.navigate("FinishOrder", {
+      number: route.params?.number,
+      order_id: route.params?.order_id,
+    });
+  }
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Mesa {route.params.number}</Text>
-        <TouchableOpacity onPress={handleCloseOrder}>
-          <Feather name="trash-2" size={28} color="#ff3f4d" />
-        </TouchableOpacity>
+        {items.length === 0 && (
+          <TouchableOpacity onPress={handleCloseOrder}>
+            <Feather name="trash-2" size={28} color="#ff3f4d" />
+          </TouchableOpacity>
+        )}
       </View>
 
       {category.length !== 0 && (
@@ -80,9 +154,14 @@ export default function Order() {
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity style={styles.input}>
-        <Text style={{ color: "#FFF" }}> Pizza Calabresa </Text>
-      </TouchableOpacity>
+      {products.length !== 0 && (
+        <TouchableOpacity
+          style={styles.input}
+          onPress={() => setModalProductVisible(true)}
+        >
+          <Text style={{ color: "#FFF" }}> {productSelected?.name} </Text>
+        </TouchableOpacity>
+      )}
 
       <View style={styles.qtdContainer}>
         <Text style={styles.qtdText}>Quantidade</Text>
@@ -96,14 +175,28 @@ export default function Order() {
       </View>
 
       <View style={styles.actions}>
-        <TouchableOpacity style={styles.buttonAdd}>
+        <TouchableOpacity style={styles.buttonAdd} onPress={handleAdd}>
           <Text style={styles.btnText}>+</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity
+          onPress={handleNavigation}
+          style={[styles.button, { opacity: items.length === 0 ? 0.3 : 1 }]}
+          disabled={items.length === 0}
+        >
           <Text style={styles.btnText}>Avançar</Text>
         </TouchableOpacity>
       </View>
+
+      <FlatList
+        showsVerticalScrollIndicator={false}
+        style={{ flex: 1, marginTop: 24 }}
+        data={items}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <ListItem data={item} deleteItem={handleDeleteItem} />
+        )}
+      />
 
       <Modal
         transparent={true}
@@ -111,9 +204,21 @@ export default function Order() {
         animationType="fade"
       >
         <ModalPicker
-        handleCloseModal={() => setModalCategoryVisible(false)}
-        options={category}
-        selectedItem={ChangeCategory}
+          handleCloseModal={() => setModalCategoryVisible(false)}
+          options={category}
+          selectedItem={ChangeCategory}
+        />
+      </Modal>
+
+      <Modal
+        transparent={true}
+        visible={modalProductVisible}
+        animationType="fade"
+      >
+        <ModalPicker
+          handleCloseModal={() => setModalProductVisible(false)}
+          options={products}
+          selectedItem={setProductSelected}
         />
       </Modal>
     </SafeAreaView>
@@ -183,7 +288,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   button: {
-    backgroundColor: "#3fffa3",
+    backgroundColor: "green",
     width: "75%",
     height: 40,
     borderRadius: 4,
